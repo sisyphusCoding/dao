@@ -2,30 +2,24 @@
 pragma solidity ^ 0.8.9;
 
 
-
 contract FakeNFTMarketPlace {
-  
-  mapping(uint256 => address) public tokens;
+  mapping(uint256=>address) public tokens;
 
   uint256 nftPrice = 0.001 ether;
 
-
-
-  function purchase(uint256 _tokenId) external payable{
-    require(msg.value == nftPrice , 'Incorrect eth');
-    //sich vergewissern , diese address ist null
-    require(tokens[_tokenId] == address(0),'Not for sale'); 
-
-    tokens[_tokenId] = msg.sender;
-
+  function purchase(uint256 _tokenId) external payable { 
+    require(msg.value == nftPrice ,'This nft cost 0.001 ether');
+    tokens[_tokenId] = msg.sender; 
   }
+
 
   function getPrice() external view returns(uint256){
     return nftPrice;
   }
 
-  function available (uint256 _tokenId) external view returns (bool){
-    if(tokens[_tokenId]== address(0) ){
+
+  function available(uint256 _tokenId) external view returns(bool){
+    if(tokens[_tokenId] == address(0)){
       return true;
     }
     return false;

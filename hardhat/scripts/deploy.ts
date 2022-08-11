@@ -13,10 +13,11 @@ const main = async() => {
 
   console.log('FakeNFTMarketplace:',fakeNFTMarketplace.address)
 
-  const CryptDevsDAO = await ethers.getContractFactory('CryptDevsDAO')
+
+  const CryptoDevsDAO = await ethers.getContractFactory('CryptoDevsDAO')
   
-  const cryptoDevsDAO = await CryptDevsDAO.deploy(
-    fakeNFTMarketplace,
+  const cryptoDevsDAO = await CryptoDevsDAO.deploy(
+    fakeNFTMarketplace.address,
     CRYPTODEVS_NFT_CONTRACT_ADDRESS,{
         value: ethers.utils.parseEther('0.01')
     }

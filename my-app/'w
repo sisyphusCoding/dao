@@ -1,0 +1,152 @@
+import Image from 'next/image'
+import { constants, Contract, providers } from 'ethers'
+import Web3Modal from 'web3modal'
+import {
+  FAKE_NFTMAKET_ABI,
+  FAKE_NFTMARKET_ADDRESS,
+  DAO_ABI,
+  DAO_ADDRESS
+} from '../constants'
+import { useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { table } from 'console'
+import { formatEther } from 'ethers/lib/utils'
+
+const Home = () => {
+  interface thisSigner extends providers.JsonRpcSigner {
+    getAddress(): Promise<string>
+  }
+
+  interface thisProvider extends providers.Web3Provider {
+    getAddress(): Promise<string>
+  }
+
+  const [walletConnected, setWalletConnected] = useState(false)
+  const web3ModalRef = useRef<Web3Modal>()
+  const [nftBalance, setNftBalance] = useState<number>(0)
+  const [treasuryBalance, setTreasuryBalance] = useState<string>('0')
+
+  const [numProposals, setNumProposals] = useState<string>('0')
+
+  const connectWallet = async () => {
+    try {
+      await getProviderOrSigner()
+      setWalletConnected(true)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getProviderOrSigner = async (needSigner = false) => {
+    try {
+      const provider = await web3ModalRef.current?.connect()
+      const web3Provider = new providers.Web3Provider(provider)
+      const { chainId } = await web3Provider.getNetwork()
+      if (chainId !== 4) {
+        toast.error('Connect to Rinkeby network', { id: 'rinkebyError' })
+      } else {
+        toast.success('Connected to Rinkeby network', { id: 'rinkebysuccess' })
+      }
+      if (needSigner) {
+        const signer = web3Provider.getSigner() as thisSigner
+        return signer
+      }
+      return web3Provider as thisProvider
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    if (!walletConnected) {
+      web3ModalRef.current = new Web3Modal({
+        network: 'rinkeby',
+        providerOptions: {},
+        disableInjectedProvider: false
+      })
+    }
+
+    connectWallet().then(() => {})
+  }, [walletConnected])
+
+  return (
+    <div
+      className=" 
+      shadow-2xl
+      dark:shadow-[0_15px_50px_-15px_#020202]
+      p-10
+      gap-[5vmin]
+      rounded-2xl
+      min-h-[60vmin]
+      flex-col md:flex-row
+      flex "
+    >
+      <section
+        className="
+        p-10
+        thisNeo
+        rounded-xl
+        min-w-[70vmin]
+        flex flex-col
+        gap-10
+        min-h-full grow"
+      >
+        <div className="flex flex-col gap-3">
+          <h1 className="text-3xl md:text-4xl">Welcome to Crypto Devs!</h1>
+          <h2 className="text-xl md:text-2xl">Welcome to the DAO!</h2>
+        </div>
+
+        <div
+          className="
+          flex flex-col gap-3"
+        >
+          <h4
+            className="
+            thisData
+            "
+          >
+            <span>Your CryptoDevs NFT balance:</span>
+            <span className=" rounded-md px-2 py-0.5 font-semibold">
+              {nftBalance}
+            </span>
+          </h4>
+
+          <h4 className="thisData">
+            <span>Treasury balance:</span>
+            <span className=" rounded-md px-2 py-0.5 font-semibold">
+              {formatEther(treasuryBalance)}
+            </span>
+          </h4>
+
+          <h4 className="thisData">
+            <span>Total Proposals:</span>
+            <span className=" rounded-md px-2 py-0.5 ml-2 font-semibold">
+              {numProposals}
+            </span>
+          </h4>
+        </div>
+        <div className="flex flex-row gap-5">
+          <button className="thisButton">Create Proposals</button>
+
+          <button className="thisButton">View Proposals</button>
+        </div>
+      </section>
+      <section
+        className=" 
+        w-[50vmin]
+        "
+      >
+        <Image
+          alt="header-image"
+          layout="responsive"
+          objectFit="contain"
+          src={'/cryptodev.svg'}
+          height={100}
+          width={100}
+        />
+      </section>
+    </div>
+  )
+}
+
+export default Home
