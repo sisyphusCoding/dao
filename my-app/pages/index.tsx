@@ -15,6 +15,7 @@ import { table } from 'console'
 import { formatEther } from 'ethers/lib/utils'
 import { walletconnect } from 'web3modal/dist/providers/connectors'
 import { sign } from 'crypto'
+import { type } from 'os'
 
 const Home = () => {
   interface thisSigner extends providers.JsonRpcSigner {
@@ -31,12 +32,12 @@ const Home = () => {
   const [treasuryBalance, setTreasuryBalance] = useState<any>('0')
   const [numProposals, setNumProposals] = useState<number>(0)
   const [tab, setTab] = useState<string>('')
-  const [fakeNftTokenId,setFakeNftTokenId] = useState('')
+  const [fakeNftTokenId,setFakeNftTokenId] = useState<any>('')
   const [loading,setLoading] = useState<boolean>(false)
   const viewORcreate: string[] = ['Create Proposals', 'View Proposals']
   const[imageLoaded,setImageLoaded] = useState<boolean>(false)
   const[getOut,setGetOut] = useState<boolean>(false)
-  const[proposals ,setProposals] = useState([])
+  const[proposals ,setProposals] = useState<any>([])
 
   const getDAOInstance = (providerOrSigner: any) => {
     return new Contract(DAO_ADDRESS, DAO_ABI, providerOrSigner)
@@ -127,6 +128,36 @@ const Home = () => {
   }
 
 
+  const voteOnProposal = async(proposalId:any,_vote:any) => {
+    setLoading(true)
+    try{
+      const signer = await getProviderOrSigner(true) 
+      const daoContract = getDAOInstance(signer)
+
+      let vote = _vote === 'YAY'? 0 :1
+
+      const txn = await daoContract.voteOnProposal(proposalId,vote)
+      await txn.wait()
+      await fetchAllProposals()
+    }
+    catch(error){console.log(error)}
+    setLoading(false)
+  }
+
+  const executeProposal = async(proposalId:any) =>{
+    setLoading(true)
+    try{
+      const signer = getProviderOrSigner(true)
+      const daoContract = getDAOInstance(signer)
+      const txn =  await daoContract.executeProposal(proposalId) 
+      await txn.wait()
+      await fetchAllProposals()
+    }
+    catch(error){console.log(error)}
+    setLoading(false)
+  }
+
+
   const connectWallet = async () => {
     try {
       await getProviderOrSigner()
@@ -134,6 +165,7 @@ const Home = () => {
     } catch (error) {
       console.log(error)
     }
+    
   }
 
   const getProviderOrSigner = async (needSigner = false) => {
@@ -168,13 +200,14 @@ const Home = () => {
     connectWallet().then(() => {
       getTreasuryBalance()
       getUserNFTBalance()
+      getNumProposals()
     })
   }, [walletConnected])
 
   const getIn:Variants = {
-    initial:{x:'-200%'},
+    initial:{x:'-100%'},
     show:{x:0},
-    exit:{x:'200%'},
+    exit:{x:'100%'}
   }
 
   const renderCreate = () => {
@@ -249,11 +282,29 @@ const Home = () => {
           border-zinc-200
           '/>
       )
-    }else if(proposals.length ===0){
+    }else if(proposals.length === 0){
       return(
       <p>
           No proposals have been created.
         </p>
+      )
+    }else{
+      return(
+        <div
+            
+          >
+          {proposals.map((o:any,i:number)=>(
+            <div key={i}>
+              <p>Proposal Id: {o.proposalId}</p>
+              <p>Fake NFT to Purschase:{o.nftTokenId}</p>
+              <p>Deadline:{o.deadline.toString()}</p>
+              <p>Yay Votes:{o.yayVotes}</p>
+              <p>Nay Votes:{o.nayVotes}</p>
+              <p>Executed?: {o.executed.toString()}</p>
+            </div>
+          ))}
+
+        </div>
       )
     }
   }
@@ -269,11 +320,10 @@ const Home = () => {
 
   console.log(tab)
   useEffect(() => {
-    renderTabs()
   }, [tab])
 
   return (
-    <div
+    <motion.div
       className=" 
       overflow-hidden
       shadow-2xl
@@ -356,7 +406,8 @@ const Home = () => {
           </button>
           <button
             onClick={() => {
-              setTab(viewORcreate[1])
+              setTab(viewORcreate[1]);
+              setGetOut(true)
             }}
             className="thisButton"
           >
@@ -392,17 +443,17 @@ const Home = () => {
           border-zinc-200
           `}/>
        <AnimatePresence 
-        exitBeforeEnter
+          exitBeforeEnter
       >
       {getOut?
         (<motion.section      
-        key={'one'}
+        key={tab}
+        transition={{duration:1}}
         variants={getIn}
         initial='initial'
         animate='show'
         exit='exit'
-        transition={{duration:1}}
-          className='
+        className='
         p-5
         flex flex-col items-start justify-center
         bg-zinc-700 bg-opacity-10
@@ -437,8 +488,9 @@ const Home = () => {
         </motion.section>)
         :
       <motion.div
-        transition={{duration:1}}
         key={'second'}
+
+        transition={{duration:1}}
         variants={getIn}
         initial='initial'
         animate='show'
@@ -464,7 +516,7 @@ const Home = () => {
         }
         </AnimatePresence> 
       </section>
-    </div>
+    </motion.div>
   )
 }
 
