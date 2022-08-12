@@ -606,6 +606,7 @@ const handleCount = (isMinus = false) =>{
           transition-all
           ease duration-500 delay-500
           animate-spin
+          absolute top-[45%]
           z-10
           rounded-full
           h-[8vmin] w-[8vmin]
