@@ -84,3 +84,23 @@ a {
   transform-origin:left;
   transform:scale(1,1);
 }
+
+td{
+   @apply 
+    p-[1vmin] 
+   bg-zinc-200 text-zinc-500 
+   dark:bg-zinc-700 dark:text-zinc-400
+   font-semibold tracking-tighter;
+}
+
+th{
+  @apply 
+  p-[1vmin] 
+  dark:bg-zinc-800 dark:text-zinc-500
+  bg-zinc-400 text-zinc-600
+  text-left font-semibold  font-normal tracking-tight;
+
+}
+
+
+

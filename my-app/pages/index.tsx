@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import{HiPlus} from 'react-icons/hi'
+import{FaAngleLeft,FaAngleRight,FaRegThumbsUp,FaRegThumbsDown} from 'react-icons/fa'
 import {motion, Variants,AnimatePresence} from 'framer-motion'
 import { constants, Contract, providers } from 'ethers'
 import Web3Modal, { setLocal } from 'web3modal'
@@ -11,11 +12,10 @@ import {
 } from '../constants'
 import { useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
-import { table } from 'console'
 import { formatEther } from 'ethers/lib/utils'
 import { walletconnect } from 'web3modal/dist/providers/connectors'
-import { sign } from 'crypto'
-import { type } from 'os'
+import { isMinusToken } from 'typescript'
+import { exit } from 'process'
 
 const Home = () => {
   interface thisSigner extends providers.JsonRpcSigner {
@@ -38,6 +38,10 @@ const Home = () => {
   const[imageLoaded,setImageLoaded] = useState<boolean>(false)
   const[getOut,setGetOut] = useState<boolean>(false)
   const[proposals ,setProposals] = useState<any>([])
+
+  const [currentProposals,setCurrentProposals] = useState<any>('[]')
+
+  const [thisProp,SetThisProp] = useState<number>(0)
 
   const getDAOInstance = (providerOrSigner: any) => {
     return new Contract(DAO_ADDRESS, DAO_ABI, providerOrSigner)
@@ -103,7 +107,7 @@ const Home = () => {
     const parsedProposal ={
         proposalId: id,
         nftTokenId: proposal.nftTokenId.toString(),
-        deadline: new Date(parseInt(proposal.deadline.toString())),
+        deadline: new Date(parseInt(proposal.deadline.toString()) *1000 ),
         yayVotes: proposal.yayVotes.toString(),
         nayVotes:proposal.nayVotes.toString(),
         executed: proposal.executed
@@ -144,16 +148,17 @@ const Home = () => {
     setLoading(false)
   }
 
-  const executeProposal = async(proposalId:any) =>{
+  const executeProposal = async(proposalId:number) =>{
     setLoading(true)
     try{
-      const signer = getProviderOrSigner(true)
+
+      const signer = await getProviderOrSigner(true)
       const daoContract = getDAOInstance(signer)
       const txn =  await daoContract.executeProposal(proposalId) 
       await txn.wait()
       await fetchAllProposals()
     }
-    catch(error){console.log(error)}
+    catch(error){console.log(error,'from exectute')}
     setLoading(false)
   }
 
@@ -210,13 +215,20 @@ const Home = () => {
     exit:{x:'100%'}
   }
 
+  const getInO:Variants = {
+    initial:{opacity:0,filter:'blur(20px)',scale:.8},
+    show:{opacity:1,filter:'blur(0px)',scale:1
+    },
+    exit:{opacity:0,filter:'blur(20px)',scale:1.1}
+  }
+
+
   const renderCreate = () => {
     if(loading){
       return(
         <p 
          className='          
           z-10
-          left-full
           animate-spin
           rounded-full
           h-[8vmin]
@@ -265,13 +277,28 @@ const Home = () => {
     }
     
   }
+
+const handleCount = (isMinus = false) =>{
+  
+    if(isMinus){
+      if(thisProp === 0) return
+      SetThisProp(thisProp-1)
+    }else{
+      if(thisProp === proposals.length-1) return
+      SetThisProp(thisProp+1)
+    }
+
+
+}
+
+  const dummy :Variants ={initial:{x:0},show:{x:0},exit:{x:0}}
+
   const renderView = () => {
     if(loading){
       return(
         <p 
          className='          
           z-10
-          left-full
           animate-spin
           rounded-full
           h-[8vmin]
@@ -291,19 +318,154 @@ const Home = () => {
     }else{
       return(
         <div
-            
-          >
-          {proposals.map((o:any,i:number)=>(
-            <div key={i}>
-              <p>Proposal Id: {o.proposalId}</p>
-              <p>Fake NFT to Purschase:{o.nftTokenId}</p>
-              <p>Deadline:{o.deadline.toString()}</p>
-              <p>Yay Votes:{o.yayVotes}</p>
-              <p>Nay Votes:{o.nayVotes}</p>
-              <p>Executed?: {o.executed.toString()}</p>
-            </div>
-          ))}
+          className='
+          min-h-[50vmin] 
+          min-w-full
+          flex flex-col items-stretch justify-start
+          rounded-xl
+          snap-mandatory snap-x
+          ' >
+          <div
+           className='min-w-full text-4xl flex justify-between'
+           >
+            <button
+              onClick={()=>{handleCount(true)}}
+              className='
+              bg-zinc-500 dark:bg-zinc-800
+              thisButton px-4 py-2 flex items-center
+              ' 
+            >
+            <FaAngleLeft  />
+            </button>
+              <button
+               onClick={()=>{handleCount()}}
+              className='
+              bg-zinc-500 dark:bg-zinc-800
+              thisButton px-4 py-2 flex items-center
+              ' 
+              >
 
+            <FaAngleRight/>
+
+            </button>
+          </div>
+<AnimatePresence 
+    exitBeforeEnter
+             >
+
+          <motion.div
+            variants={getInO}
+            transition={{duration:.45}}
+            initial={'initial'}
+            animate={'show'}
+            exit={'exit'}
+            key={thisProp}
+            className='
+            rounded-xl
+            flex 
+            flex-col
+            items-center justify-center
+            gap-4
+            py-5
+            grow
+            min-h-full 
+            min-w-full
+            '
+            >
+            <motion.table
+            className='
+            shadow-[0_2px_20px_-5px_rgba(0,0,0,.5)]
+            rounded-xl overflow-hidden
+            min-w-[35vmin]
+            text-xs
+            md:text-sm
+            bg-zinc-200
+                '
+            >
+            <tbody
+              className=''
+              >
+              <tr
+              className=''
+                >
+                <th> Proposals Id: </th>
+                <td>{proposals[thisProp].proposalId}</td>
+              </tr>
+              <tr>
+                <th> Fake NFT to Purschase:</th>
+                <td>{proposals[thisProp].nftTokenId}</td>
+              </tr>
+                <tr>
+                    <th>Deadline:</th>
+                    <td
+                       className='flex md:flex-col gap-3'
+                       >
+                        <span> 
+                          {proposals[thisProp].deadline.getHours()} : {' '}
+                          {proposals[thisProp].deadline.getMinutes()+1} : {' '}
+
+                          {proposals[thisProp].deadline.getSeconds()}
+                        </span>
+                        <span className='whitespace-nowrap'>
+                          {proposals[thisProp].deadline.getDate()} - {' '}
+                          {proposals[thisProp].deadline.getMonth()+1} -{' '}
+                          {proposals[thisProp].deadline.getFullYear()}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                  <th>Yay Votes:</th>
+                  <td>{proposals[thisProp].yayVotes}</td>
+                </tr>
+
+                <tr>
+                  <th>Nay Votes:</th>
+                  <td>{proposals[thisProp].nayVotes}</td>
+                </tr>
+                <tr>
+                    <th>Executed?:</th>
+                    <td>{proposals[thisProp].executed.toString()}</td>
+                </tr> 
+            </tbody>
+            </motion.table>
+
+
+          {proposals[thisProp].deadline.getTime()>Date.now() && !proposals[thisProp].executed? (
+            <div className='flex min-w-full justify-between '>
+              <button className='thisButton md:text-sm text-xs flex items-center gap-2' 
+              onClick={()=>voteOnProposal(proposals[thisProp].proposalId,'YAY')}>
+                Vote YAY <FaRegThumbsUp/>
+              </button>
+              <button className='thisButton md:text-sm text-xs flex items-center gap-2 !bg-red-800'  
+              onClick={()=>voteOnProposal(proposals[thisProp].proposalId,'NAY')}>
+                Vote NAY <FaRegThumbsDown/>
+              </button>
+
+            </div>
+
+          ):
+          proposals[thisProp].deadline.getTime() < Date.now() && !proposals[thisProp].executed ? (
+              
+          <div 
+           className='flex  min-w-full justify-center items-center gap-10'>
+           <button
+            onClick={()=>{
+                    executeProposal(proposals[thisProp].proposalId );
+                        console.log(proposals[thisProp].proposalId)
+                      }}
+            className='thisButton md:text-sm text-xs'
+             >
+            Execute Proposal{" "}
+            {proposals[thisProp].yayVotes>proposals[thisProp].nayVotes ? '(YAY)' : '(NAY)'}
+           </button>
+           </div>
+          ):
+            <p className='thisButton bg-green-500 dark:bg-green-700 text-white' >Proposal executed!!</p>
+            }
+
+          </motion.div>
+
+            </AnimatePresence>
         </div>
       )
     }
@@ -320,7 +482,9 @@ const Home = () => {
 
   console.log(tab)
   useEffect(() => {
-  }, [tab])
+  if(tab === viewORcreate[1]){ 
+  fetchAllProposals() 
+  }}, [tab])
 
   return (
     <motion.div
@@ -328,10 +492,12 @@ const Home = () => {
       overflow-hidden
       shadow-2xl
       dark:shadow-[0_15px_50px_-15px_#020202]
-      p-10
-      gap-[5vmin]
+      p-[2.5vmin]
+      gap-[2vmin]
+      md:gap-[5vmin]
       rounded-2xl
-      min-h-[60vmin]
+      md:min-h-[60vmin]
+      min-h-[85vh]
       flex-col md:flex-row
       flex "
     >
@@ -352,13 +518,14 @@ const Home = () => {
       />
       <section
         className="
-        p-10
+        p-[2.5vmin]
         thisNeo
         rounded-xl
         min-w-[70vmin]
+        md:min-w-[60vmin]
         flex flex-col
-        gap-10
-        min-h-full grow"
+        md:gap-10  gap-4
+        min-h-full"
       >
         <div className="flex flex-col gap-3">
           <h1 className="text-2xl md:text-4xl">Welcome to Crypto Devs!</h1>
@@ -419,11 +586,15 @@ const Home = () => {
       </div>
 
     <section
-       className='flex items-center 
-         min-h-full
+       className='flex
+        thisNeo
+        items-start
         justify-center 
+        rounded-xl
+        grow
         relative 
-        md:min-w-[50vmin] 
+        min-h-[60vmin]
+        md:min-w-[60vmin] 
         min-w-[80vmin]
         overflow-hidden
         '
@@ -437,13 +608,11 @@ const Home = () => {
           z-10
           rounded-full
           h-[8vmin] w-[8vmin]
-          absolute
           border-4 
           border-l-zinc-700
           border-zinc-200
           `}/>
        <AnimatePresence 
-          exitBeforeEnter
       >
       {getOut?
         (<motion.section      
@@ -454,27 +623,30 @@ const Home = () => {
         animate='show'
         exit='exit'
         className='
-        p-5
-        flex flex-col items-start justify-center
+        gap-[2.5vmin]
+        flex flex-col items-center 
+        py-2
+        justify-between
         bg-zinc-700 bg-opacity-10
-        rounded-xl
-        min-h-full
-        md:min-w-[50vmin] 
+        absolute
+        min-h-[60vmin]
+        md:min-w-[60vmin] 
+        md:max-w-[60vmin]
         min-w-[80vmin]
               '
              >
       <div
-        className='min-w-full flex justify-between items-center'       
+        className='flex justify-around md:justify-between min-w-full items-center p-3'       
         >
-        <p className='text-lg md:text-xl' >{tab}</p>
+        <p className='text-sm md:text-xl' >{tab}</p>
         <button 
           className='
                 bg-red-600 dark:bg-green-800
-                px-3 py-2
                 thisButton
                 self-end 
                 outline-none
                 text-xs
+
                 '
           onClick={()=>{setGetOut(false)}}>
                 CLOSE
@@ -482,25 +654,28 @@ const Home = () => {
 
               </div>
        <div 
-        className='flex grow items-center justify-center relative'>
+        className='
+                px-[5vmin]
+                max-w-full
+                flex grow items-center justify-center relative '>
             {renderTabs()}
               </div>
         </motion.section>)
         :
       <motion.div
         key={'second'}
-
         transition={{duration:1}}
         variants={getIn}
         initial='initial'
         animate='show'
         exit='exit'
         className={`
+        absolute
         ${imageLoaded? 'opacity-100 blur-none':'blur-xl opacity-0'}
         transition-[filter,opacity]
         ease duration-1000 delay-1000
-        md:w-[50vmin]
-        w-[30vmin]
+        md:min-w-[60vmin]
+        min-w-[80vmin]
         `}
       >
         <Image

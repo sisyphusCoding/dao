@@ -1,6 +1,6 @@
 
 
-export const DAO_ADDRESS = '0x48b76287f1e583297517D66375842F08BBa5C61d'
+export const DAO_ADDRESS = '0x3CC09e973116545Fd16a4AC1401185EdC6EFFf80'
 
 export const NFT_CONTRACT_ADDRESS = '0x0911Fd574A1c0E259C7AA3F175718DA62Bb5e7A6'
 
@@ -657,7 +657,7 @@ export const DAO_ABI =[
           "type": "uint256"
         }
       ],
-      "name": "exectueProposal",
+      "name": "executeProposal",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -776,9 +776,4 @@ export const DAO_ABI =[
       "stateMutability": "payable",
       "type": "receive"
     }
- 
 ]
-
-
-
-
