@@ -561,7 +561,8 @@ const handleCount = (isMinus = false) =>{
             </span>
           </h4>
         </div>
-        <div className="flex flex-row gap-5">
+        {walletConnected? 
+        <div className="flex flex-row gap-5"> 
         <button
           onClick={() => {
           setTab(viewORcreate[0]);
@@ -580,7 +581,7 @@ const handleCount = (isMinus = false) =>{
           >
             View Proposals
           </button>
-        </div>
+        </div> : <button onClick={connectWallet} className='thisButton'>Connect Wallet</button>}
       </section>
   <div>
       </div>
